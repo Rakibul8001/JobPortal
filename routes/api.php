@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 //public routes
+Route::post('/register',[UserController::class, 'register'])->name('register');
+Route::get('/users',[UserController::class, 'index'])->name('user.index');
 Route::apiResource('jobs',JobController::class);
 
 //protected routes
