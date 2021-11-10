@@ -78,7 +78,7 @@ class UserController extends Controller
         $logout = $user->tokens()->delete();
 
         if($logout){
-            return response()->json(['message'=>'Logged Out..']);
+            return response()->json(['message'=>'Logged Out..'],201);
         }
     }
 
