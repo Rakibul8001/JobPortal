@@ -18,7 +18,7 @@ class UserController extends Controller
         return response()->json(['message'=>"You don't have admin access."]);
 
     }
-    //User registration
+    // registration
     public function register(Request $request)
     {
         $data = $request->validate([
@@ -45,43 +45,41 @@ class UserController extends Controller
         return response($response, 201);
     }
 
-        //User Login
-        public function login(Request $request)
-        {
-            $data = $request->validate([
-                'email'=>'required|string',
-                'password' => 'required|string'
-            ]);
-    
-            $user = User::where('email',$data['email'])->first();
-    
-            if(!$user || !Hash::check($data['password'], $user->password)){
-                return response([
-                    'message'=>'Wrong Credentials'
-                ],401);
-            }
-    
-            $token = $user->createToken('usertoken')->plainTextToken;
-    
-            $response = [
-                'user'=>$user,
-                'token'=>$token
-            ];
-    
-            return response($response, 201);
+    // Login
+    public function login(Request $request)
+    {
+        $data = $request->validate([
+            'email'=>'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $user = User::where('email',$data['email'])->first();
+
+        if(!$user || !Hash::check($data['password'], $user->password)){
+            return response([
+                'message'=>'Wrong Credentials'
+            ],401);
         }
 
-        //Logout
-        public function logout(Request $request, $id)
-        {
-            $user = User::find($id);
-            $logout = $user->tokens()->delete();
+        $token = $user->createToken('usertoken')->plainTextToken;
 
-            if($logout)
-            {
-                return response()->json(['message'=>'Logged Out..']);
-            }
+        $response = [
+            'user'=>$user,
+            'token'=>$token
+        ];
+
+        return response($response, 201);
+    }
+
+    //Logout
+    public function logout(Request $request, $id)
+    {
+        $user = User::find($id);
+        $logout = $user->tokens()->delete();
+
+        if($logout){
+            return response()->json(['message'=>'Logged Out..']);
         }
+    }
 
-    
 }
