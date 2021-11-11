@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Job;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class JobController extends Controller
 {
@@ -16,7 +17,9 @@ class JobController extends Controller
     public function index()
     {
         //Job list
-        return Job::all();
+        if(Auth::check()){
+            return Job::all();
+        }
     }
 
     /**
@@ -29,12 +32,17 @@ class JobController extends Controller
     {
         if(Auth::check() && Auth::user()->role =='admin'){
 
-            $request->validate([
-                'title'=>'required | max:255',
-                'description'=>'required',
-            ]);
+            $job = new Job;
+            $job->user_id = Auth::user()->id;
+            $job->title = $request->title;
+            $job->description = $request->description;
+            $job->status = $request->status;
+            $filename = $request->thumbnail->store('public/uploads');
+            $job->thumbnail = $filename;
+            $job->save();
 
-            return Job::create($request->all());
+            return response()->json(['success' => true, 'message' => 'Job Post created successfully!', 
+                                        'updated_data' => $job], 200);
         }
         return response()->json(['message'=>"Don't have admin access."]);
 
@@ -48,7 +56,10 @@ class JobController extends Controller
      */
     public function show($id)
     {
-        return Job::find($id);
+        if(Auth::check()){
+            return Job::find($id);
+        }
+
     }
 
     /**
@@ -60,10 +71,22 @@ class JobController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $job = Job::find($id);
-        $job->update($request->all());
+        if(Auth::check() && Auth::user()->role =='admin'){
+            $job = Job::find($id);
 
-        return $job;
+            if ($request->hasFile('thumbnail')) {
+                $logo = $request->thumbnail;
+                $fileName = date('Y') . $logo->getClientOriginalName();
+                $path = $request->thumbnail->storeAs('thumbnail', $fileName, 'public/uploads');
+                $job['thumbnail'] = $path;
+            }
+        
+            $job->update($request->except('thumbnail'));
+        
+            return response()->json(['success' => true, 'message' => 'Job Post updated successfully!', 
+                               'updated_data' => $job], 200);
+        }
+        return response()->json(['message'=>"Don't have admin access."]);
     }
 
     /**
@@ -74,6 +97,12 @@ class JobController extends Controller
      */
     public function destroy($id)
     {
-        return Job::destroy($id);
+        if(Auth::check() && Auth::user()->role =='admin')
+        {
+            Job::destroy($id);
+            return response()->json(['success' => true, 
+                'message' => 'Job Post deleted successfully!'], 200);
+        }
+        return response()->json(['message'=>"Don't have admin access."]);
     }
 }

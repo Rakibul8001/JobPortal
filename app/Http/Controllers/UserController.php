@@ -21,19 +21,15 @@ class UserController extends Controller
     // registration
     public function register(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'name'=>'required|string',
             'email'=>'required|string|unique:users,email',
             'password' => 'required|string|confirmed',
-            'role' => 'required|string'
         ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => bcrypt($data['password']),
-            'role' => $data['role'],
-        ]);
+        $data = $request->all();
+        $data['password'] = bcrypt($request->password);
+        $user = User::create($data);
 
         $token = $user->createToken('usertoken')->plainTextToken;
 
@@ -72,8 +68,9 @@ class UserController extends Controller
     }
 
     //Logout
-    public function logout(Request $request, $id)
+    public function logout(Request $request,$id)
     {
+        //when logout token delete 
         $user = User::find($id);
         $logout = $user->tokens()->delete();
 
