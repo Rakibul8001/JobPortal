@@ -26,10 +26,12 @@ class UserController extends Controller
             'email'=>'required|string|unique:users,email',
             'password' => 'required|string|confirmed',
         ]);
-
-        $data = $request->all();
-        $data['password'] = bcrypt($request->password);
-        $user = User::create($data);
+        
+        $user = new User;
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = bcrypt($request->password);
+        $user->save();
 
         $token = $user->createToken('usertoken')->plainTextToken;
 
@@ -52,9 +54,7 @@ class UserController extends Controller
         $user = User::where('email',$data['email'])->first();
 
         if(!$user || !Hash::check($data['password'], $user->password)){
-            return response([
-                'message'=>'Wrong Credentials'
-            ],401);
+            return response(['message'=>'Wrong Credentials'],401);
         }
 
         $token = $user->createToken('usertoken')->plainTextToken;
@@ -77,6 +77,53 @@ class UserController extends Controller
         if($logout){
             return response()->json(['message'=>'Logged Out..'],201);
         }
+    }
+
+    //Create user
+    public function createUser(Request $request)
+    {
+        if(Auth::check() && Auth::user()->role =='admin'){
+            $request->validate([
+                'name'=>'required|string',
+                'email'=>'required|string|unique:users,email',
+                'password' => 'required|string|confirmed',
+                'role' => 'required|string',
+            ]);
+
+            $data = $request->all();
+            $data['password'] = bcrypt($request->password);
+            $user = User::create($data);
+
+            $token = $user->createToken('usertoken')->plainTextToken;
+
+            $response = [
+                'user'=>$user,
+                'token'=>$token,
+            ];
+
+            return response($response, 201);
+        }
+        return response()->json(['message'=>"Don't have admin access."]);
+
+    }
+
+    //Create user
+    public function updateUser(Request $request, $id){
+        //admin change user role
+        if(Auth::check() && Auth::user()->role =='admin'){
+            $request->validate([
+                'role' => 'required|string',
+            ]);
+            $user = User::find($id);
+            $user->role = $request->role;
+            $user->update();
+    
+            return response()->json(['success' => true, 'message' => 'User Role updated successfully!', 
+                'updated_data' => $user], 200);
+        }
+
+        return response()->json(['message'=>"Don't have admin access."]);
+
     }
 
 }
