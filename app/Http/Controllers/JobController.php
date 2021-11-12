@@ -32,6 +32,12 @@ class JobController extends Controller
     {
         if(Auth::check() && Auth::user()->role =='admin'){
 
+            $request->validate([
+                'title'=>'required | max:255',
+                'description'=>'required|string',
+                'status' => 'required'
+            ]);
+
             $job = new Job;
             $job->user_id = Auth::user()->id;
             $job->title = $request->title;
