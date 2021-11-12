@@ -80,7 +80,7 @@ class JobController extends Controller
                 $path = $request->thumbnail->storeAs('thumbnail', $fileName, 'public/uploads');
                 $job['thumbnail'] = $path;
             }
-        
+            $job->user_id = Auth::user()->id;
             $job->update($request->except('thumbnail'));
         
             return response()->json(['success' => true, 'message' => 'Job Post updated successfully!', 
